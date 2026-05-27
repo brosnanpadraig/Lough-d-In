@@ -112,7 +112,7 @@ h2.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,
 .task-del:active{color:#e67e7a}
 .empty-tasks{padding:1.5rem 1rem;text-align:center;color:rgba(255,255,255,.45);font-size:13px;font-style:italic}
 
-.stat-grid{display:grid;grid-template-columns:auto 1fr 1fr;gap:clamp(10px,3vw,16px);align-items:center;margin-bottom:.85rem}
+.stat-grid{display:grid;grid-template-columns:auto 1fr 1fr 1fr;gap:clamp(10px,3vw,16px);align-items:center;margin-bottom:.85rem}
 .goal-ring{width:clamp(52px,13vw,64px);height:clamp(52px,13vw,64px);position:relative;flex-shrink:0}
 .goal-ring svg{width:100%;height:100%;transform:rotate(-90deg)}
 .goal-ring-bg{fill:none;stroke:rgba(255,255,255,.15);stroke-width:5}
@@ -266,6 +266,10 @@ h2.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,
           <div class="stat-mini-val" id="stat-time">0m</div>
           <div class="stat-mini-lbl">Focus time</div>
         </div>
+        <div class="stat-mini">
+          <div class="stat-mini-val" id="stat-tasks">0</div>
+          <div class="stat-mini-lbl">Tasks done</div>
+        </div>
       </div>
       <div class="heat-row" id="heat-row"></div>
       <div class="heat-days"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
@@ -411,7 +415,7 @@ function syncStats(){
 }
 function renderHeat(){
   const el=document.getElementById('heat-row');el.innerHTML='';
-  weeklyPoms.forEach((v,i)=>{let l=0;if(v>=DAILY_GOAL)l=4;else if(v>=Math.ceil(DAILY_GOAL*.75))l=3;else if(v>=Math.ceil(DAILY_GOAL*.5))l=2;else if(v>0)l=1;const c=document.createElement('div');c.className='heat-cell'+(i===6?' today':'');c.dataset.level=l;c.title=`${v} pomodoros`;el.appendChild(c);});
+  weeklyPoms.forEach((v,i)=>{let l=0;if(v>=DAILY_GOAL)l=4;else if(v>=Math.ceil(DAILY_GOAL*.75))l=3;else if(v>=Math.ceil(DAILY_GOAL*.5))l=2;else if(v>0)l=1;const c=document.createElement('div');const todayDow=(new Date().getDay()+6)%7;c.className='heat-cell'+(i===todayDow?' today':'');c.dataset.level=l;c.title=`${v} pomodoros`;el.appendChild(c);});
 }
 function beep(){try{const ac=new AudioContext(),o=ac.createOscillator(),g=ac.createGain();o.connect(g);g.connect(ac.destination);o.frequency.value=720;g.gain.setValueAtTime(.25,ac.currentTime);g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+1);o.start();o.stop(ac.currentTime+1);}catch(e){}}
 function checkStreak(){const today=new Date().toDateString();if(pomToday>=DAILY_GOAL&&lastActiveDate!==today){const y=new Date();y.setDate(y.getDate()-1);if(lastActiveDate===y.toDateString()||!lastActiveDate)streak++;else streak=1;lastActiveDate=today;saveState();}}
@@ -441,6 +445,8 @@ function renderTasks(){
   const ul=document.getElementById('task-list');ul.innerHTML='';
   document.getElementById('count-work').textContent=tasks.work.filter(t=>!t.done).length;
   document.getElementById('count-personal').textContent=tasks.personal.filter(t=>!t.done).length;
+  const totalDone=tasks.work.filter(t=>t.done).length+tasks.personal.filter(t=>t.done).length;
+  const tde=document.getElementById('stat-tasks');if(tde)tde.textContent=totalDone;
   const list=tasks[currentList];
   if(!list.length){ul.innerHTML='<li class="empty-tasks">no tasks yet — add one above</li>';return;}
   [...list].sort((a,b)=>a.done!==b.done?a.done?1:-1:(PW[b.priority||'med'])-(PW[a.priority||'med'])).forEach(t=>{
