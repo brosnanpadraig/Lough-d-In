@@ -38,6 +38,11 @@ h2.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,
 
 #content{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;padding:var(--pad) var(--pad) calc(var(--pad)*2);gap:var(--gap);color:#fff;width:100%;max-width:680px;margin:0 auto}
 
+/* Quote carousel */
+.quote-carousel{width:100%;max-width:680px;text-align:center;padding:0 1rem;min-height:48px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+#main-quote{font-style:italic;font-size:clamp(12px,3vw,14px);color:rgba(255,255,255,.6);line-height:1.6;transition:opacity .8s ease;max-width:520px}
+#main-quote-attr{font-size:clamp(9px,2.2vw,10px);color:rgba(255,255,255,.4);margin-top:4px;letter-spacing:1px;text-transform:uppercase;transition:opacity .8s ease}
+
 .brand-row{display:flex;justify-content:space-between;align-items:center;width:100%;padding-top:env(safe-area-inset-top)}
 .brand{display:flex;align-items:baseline;gap:.5rem}
 .brand-mark{font-size:clamp(18px,5vw,24px);font-weight:500;letter-spacing:.3px;color:#fff}
@@ -95,7 +100,12 @@ h2.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,
 .task-list::-webkit-scrollbar{width:4px}
 .task-list::-webkit-scrollbar-thumb{background:rgba(255,255,255,.2);border-radius:2px}
 
-.task{display:flex;align-items:center;gap:10px;padding:clamp(10px,3vw,12px);border-radius:10px;background:rgba(255,255,255,.08);border-left:3px solid rgba(255,255,255,.2);cursor:pointer;transition:background .15s;touch-action:manipulation}
+.task{display:flex;align-items:center;gap:10px;padding:clamp(10px,3vw,12px);border-radius:10px;background:rgba(255,255,255,.08);border-left:3px solid rgba(255,255,255,.2);cursor:pointer;transition:background .15s,transform .15s,opacity .15s;touch-action:manipulation;position:relative}
+.task:active{background:rgba(255,255,255,.18)}
+.task.dragging{opacity:.4;transform:scale(.97)}
+.task.drag-over{border-top:2px solid var(--warm);margin-top:2px}
+.task-grip{cursor:grab;color:rgba(255,255,255,.3);font-size:14px;flex-shrink:0;padding:0 2px;line-height:1;touch-action:none;-webkit-user-select:none;user-select:none}
+.task-grip:active{cursor:grabbing;color:rgba(255,255,255,.7)}
 .task:active{background:rgba(255,255,255,.18)}
 .task[data-prio="high"]{border-left-color:#e67e7a}
 .task[data-prio="med"]{border-left-color:var(--warm)}
@@ -206,6 +216,12 @@ h2.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,
         <button class="brand-btn" id="btn-zen" title="Zen mode">&#x2922;</button>
         <button class="brand-btn" id="btn-settings" title="Settings">&#x2699;</button>
       </div>
+    </div>
+
+    <!-- Quote carousel -->
+    <div class="quote-carousel">
+      <div id="main-quote"></div>
+      <div id="main-quote-attr"></div>
     </div>
 
     <div class="timer-block">
@@ -335,8 +351,20 @@ const QUOTES=[
   {q:"Small steps every day. That's how mountains are crossed.",a:""},
   {q:"Concentration is the root of all the higher abilities.",a:"Bruce Lee"},
   {q:"Discipline is choosing between what you want now and what you want most.",a:"Abraham Lincoln"},
+  {q:"Do what you can't.",a:"Casey Neistat"},
+  {q:"Free time is the enemy of progress.",a:"Casey Neistat"},
+  {q:"If you're doing what everyone else is doing, you're doing it wrong.",a:"Casey Neistat"},
+  {q:"The right time is always right now.",a:"Casey Neistat"},
+  {q:"Work harder than everybody else and nothing can stop you.",a:"Casey Neistat"},
+  {q:"Ideas are cheap. Execution is everything.",a:"Casey Neistat"},
+  {q:"It's a lot easier to talk about doing something than to actually do it.",a:"Casey Neistat"},
+  {q:"Without a goal, you can't score.",a:"Casey Neistat"},
+  {q:"Persistence and endurance will make you omnipotent.",a:"Casey Neistat"},
+  {q:"You can't steer a parked car. You have to move first.",a:"Casey Neistat"},
+  {q:"There's no right or wrong. There's only boring and fun.",a:"Casey Neistat"},
+  {q:"Always be closing.",a:"Casey Neistat"},
 ];
-let qIdx=0,qTimer=null;
+let qIdx=0,qTimer=null,mainQIdx=0,mainQTimer=null;
 function showQuote(i){
   const el=document.getElementById('zen-quote-text'),at=document.getElementById('zen-quote-attr');
   el.style.opacity='0';at.style.opacity='0';
@@ -345,6 +373,17 @@ function showQuote(i){
 function startQuotes(){qIdx=Math.floor(Math.random()*QUOTES.length);showQuote(qIdx);qTimer=setInterval(()=>{qIdx=(qIdx+1)%QUOTES.length;showQuote(qIdx);},14000);}
 function stopQuotes(){clearInterval(qTimer);document.getElementById('zen-quote-text').textContent='';document.getElementById('zen-quote-attr').textContent='';}
 
+function showMainQuote(i){
+  const el=document.getElementById('main-quote'),at=document.getElementById('main-quote-attr');
+  if(!el)return;
+  el.style.opacity='0';at.style.opacity='0';
+  setTimeout(()=>{const q=QUOTES[i];el.textContent=`"${q.q}"`;at.textContent=q.a?'— '+q.a:'';el.style.opacity='1';at.style.opacity='1';},600);
+}
+function startMainQuotes(){
+  mainQIdx=Math.floor(Math.random()*QUOTES.length);
+  showMainQuote(mainQIdx);
+  mainQTimer=setInterval(()=>{mainQIdx=(mainQIdx+1)%QUOTES.length;showMainQuote(mainQIdx);},60000);
+}
 let scenes=[...STARTER_SCENES],sceneIdx=0,isGenerating=false;
 function renderScenes(){
   const s=document.getElementById('scene-stack');s.innerHTML='';
@@ -441,6 +480,7 @@ document.getElementById('zen-exit-btn').onclick=()=>{document.getElementById('ap
 const tasks={work:[],personal:[]};let nextId=1;
 const PW={high:3,med:2,low:1};
 function esc(s){return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+let dragSrcIdx=null;
 function renderTasks(){
   const ul=document.getElementById('task-list');ul.innerHTML='';
   document.getElementById('count-work').textContent=tasks.work.filter(t=>!t.done).length;
@@ -449,13 +489,64 @@ function renderTasks(){
   const tde=document.getElementById('stat-tasks');if(tde)tde.textContent=totalDone;
   const list=tasks[currentList];
   if(!list.length){ul.innerHTML='<li class="empty-tasks">no tasks yet — add one above</li>';return;}
-  [...list].sort((a,b)=>a.done!==b.done?a.done?1:-1:(PW[b.priority||'med'])-(PW[a.priority||'med'])).forEach(t=>{
+  list.forEach((t,idx)=>{
     const li=document.createElement('li');
     const isActive=activeTask&&activeTask.list===currentList&&activeTask.id===t.id;
     li.className='task'+(isActive?' active':'')+(t.done?' done':'');
     li.dataset.prio=t.priority||'med';
-    li.innerHTML=`<div class="task-check${t.done?' checked':''}" data-act="check"></div><span class="task-text" data-act="activate">${esc(t.text)}</span>${t.poms>0?`<span class="task-poms">${t.poms} &#x1F345;</span>`:''}<button class="task-del" data-act="del">&#x00D7;</button>`;
-    li.onclick=e=>{const a=e.target.dataset.act;if(a==='check')toggleDone(t.id);else if(a==='del'){e.stopPropagation();deleteTask(t.id);}else activateTask(t.id);};
+    li.draggable=true;
+    li.dataset.idx=idx;
+    li.innerHTML=`<span class="task-grip" data-act="grip">⠿</span><div class="task-check${t.done?' checked':''}" data-act="check"></div><span class="task-text" data-act="activate">${esc(t.text)}</span>${t.poms>0?`<span class="task-poms">${t.poms} &#x1F345;</span>`:''}<button class="task-del" data-act="del">&#x00D7;</button>`;
+    li.addEventListener('dragstart',e=>{dragSrcIdx=idx;li.classList.add('dragging');e.dataTransfer.effectAllowed='move';});
+    li.addEventListener('dragend',()=>{li.classList.remove('dragging');dragSrcIdx=null;ul.querySelectorAll('.task').forEach(t=>t.classList.remove('drag-over'));});
+    li.addEventListener('dragover',e=>{e.preventDefault();e.dataTransfer.dropEffect='move';ul.querySelectorAll('.task').forEach(t=>t.classList.remove('drag-over'));li.classList.add('drag-over');});
+    li.addEventListener('dragleave',()=>li.classList.remove('drag-over'));
+    li.addEventListener('drop',e=>{
+      e.preventDefault();li.classList.remove('drag-over');
+      if(dragSrcIdx===null||dragSrcIdx===idx)return;
+      const arr=tasks[currentList];
+      const item=arr.splice(dragSrcIdx,1)[0];
+      arr.splice(idx,0,item);
+      dragSrcIdx=null;
+      renderTasks();saveState();
+    });
+    // Touch drag support
+    let touchY=0,touchEl=null,touchIdx=null;
+    li.addEventListener('touchstart',e=>{
+      if(!e.target.closest('.task-grip'))return;
+      touchY=e.touches[0].clientY;touchEl=li;touchIdx=idx;
+      li.classList.add('dragging');
+    },{passive:true});
+    li.addEventListener('touchmove',e=>{
+      if(touchIdx===null)return;
+      e.preventDefault();
+      const touch=e.touches[0];
+      const target=document.elementFromPoint(touch.clientX,touch.clientY);
+      ul.querySelectorAll('.task').forEach(t=>t.classList.remove('drag-over'));
+      if(target){const row=target.closest('.task');if(row)row.classList.add('drag-over');}
+    },{passive:false});
+    li.addEventListener('touchend',e=>{
+      if(touchIdx===null)return;
+      li.classList.remove('dragging');
+      const touch=e.changedTouches[0];
+      const target=document.elementFromPoint(touch.clientX,touch.clientY);
+      if(target){
+        const row=target.closest('.task');
+        if(row&&row.dataset.idx!==undefined){
+          const dropIdx=parseInt(row.dataset.idx);
+          if(dropIdx!==touchIdx){
+            const arr=tasks[currentList];
+            const item=arr.splice(touchIdx,1)[0];
+            arr.splice(dropIdx,0,item);
+            saveState();
+          }
+        }
+      }
+      touchIdx=null;touchEl=null;
+      ul.querySelectorAll('.task').forEach(t=>t.classList.remove('drag-over'));
+      renderTasks();
+    });
+    li.onclick=e=>{const a=e.target.dataset.act;if(a==='check')toggleDone(t.id);else if(a==='del'){e.stopPropagation();deleteTask(t.id);}else if(a!=='grip')activateTask(t.id);};
     ul.appendChild(li);
   });
 }
